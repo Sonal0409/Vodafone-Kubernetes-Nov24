@@ -12,3 +12,23 @@ Orchestration provides 4 main features:
 
 
 Kubernetes and Azure Kubernetes Service
+
+Kubernetes:
+=====================
+It works in a Master and node setup
+Kubernetes can be used to orchestrate containers of different container tools like docker, crio, container d and so on.
+So before setting up Kubernetes we have to ensure CRI (container runtime interface) is available on each VM
+We have to also setup CNI (container network interface)
+Kubernetes support auto scaling of containers
+The Kubernetes the container will always be scheduled on Worker node, commands of K8s will be executed on Master node.
+IN K8s there are various controllers or objects that will help in orchestration activites
+ReplicaSet
+Deployment
+Service
+Jobs
+PV
+
+In Kubernetes the containers can preserve data outside the cluster also.
+Kubernetes provides features of configMap and secrets
+Kubernetes also has a GUI - Kubernetes dashboard
+
