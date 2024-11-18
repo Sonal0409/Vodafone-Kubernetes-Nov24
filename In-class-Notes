@@ -1,0 +1,14 @@
+Container Orchestration 
+
+Orchestration: Using a tool to manage the Lifecycle of a container
+
+Orchestration provides 4 main features:
+====================================
+- Creation of multiple replicas using a single image
+- Distribution those replicas on different VMs (cluster)
+- Scaling up and scale down of replicas
+- Ensure the desired count of replicas are always available
+- Rolling update of the Image - Using a tool to delete container of old image and creating new containers of new Image
+
+
+Kubernetes and Azure Kubernetes Service
