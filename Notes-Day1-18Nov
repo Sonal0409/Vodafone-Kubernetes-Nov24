@@ -117,3 +117,44 @@ Paste the token, the node will join the master node
 
 On Master Node:
 # kubectl get nodes
+
+
+==========================================================
+
+Creation of a Pod with a single container
+
+kubectl create -f https://raw.githubusercontent.com/Sonal0409/Vodafone-Kubernetes-Notes/main/Day1-Notes/pod.yml
+
+kubectl get pods
+
+kubectl get pods -o wide
+
+kubectl describe pod nginx-pod
+
+=====================================
+
+Creation of a Pod wih multiple containers -> Multi Container Pod
+kubectl create -f https://raw.githubusercontent.com/Sonal0409/Vodafone-Kubernetes-Notes/main/Day1-Notes/multi-containerPod.yml
+
+kubectl get pods -o wide
+
+
+ReplicaSet Demo
+=====================================
+kubectl create -f https://raw.githubusercontent.com/Sonal0409/Vodafone-Kubernetes-Notes/main/Day1-Notes/ReplicaSet.yml
+
+kubectl get pods
+
+kubectl get pods --show-labels
+
+kubectl get pods -l type=webserver
+
+kubectl get all
+
+kubectl scale --replicas=5 replicaset myrs1
+
+kubectl scale --replicas=2 replicaset myrs1
+
+kubectl delete replicaset myrs1
+
+=====================================
