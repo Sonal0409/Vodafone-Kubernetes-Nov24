@@ -78,6 +78,141 @@ while true;do curl serviceClusterIP:80;sleep 1;echo"";done
 
 example: while true;do curl 10.102.253.113:80;sleep 1;echo"";done
 
+======================================================================
+Blue and Green Deployment:
+========================================
+
+# kubectl delete all --all
+
+Demo1:
+=====================
+
+vim deployment-blue.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: blue
+spec:
+ replicas: 3
+ selector:
+  matchLabels:
+   app: kubeserve
+   env: blue
+ template:
+  metadata:
+   labels:
+    app: kubeserve
+    env: blue
+  spec:
+   containers:
+    - name: c1
+      image: leaddevops/kubeserve:v1
+
+
+
+# kubectl delete deployment mydeploy
+# kubectl create -f deployment-blue.yml
+# kubectl get all
+
+Create a Service for Blue environment
+========================
+
+
+# vim service-blue.yml
+
+
+
+apiVersion: v1
+kind: Service
+metadata:
+ name: blue
+spec:
+ type: ClusterIP
+ ports:
+  - targetPort: 80
+    port: 80
+ selector:
+  app: kubeserve
+  env: blue
+
+
+# kubectl create -f service-blue.yml
+# kubectl get endpoints
+
+Observe: Traffic being redirected to blue environment pods
+
+Set up green Deployment
+======================================
+
+vim deployment-green.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: green
+spec:
+ replicas: 0
+ selector:
+  matchLabels:
+   app: kubeserve
+   env: green
+ template:
+  metadata:
+   labels:
+    app: kubeserve
+    env: green
+  spec:
+   containers:
+    - name: c1
+      image: leaddevops/kubeserve:v2
+
+
+# kubectl create -f deployment-green.yml
+
+# kubectl get deployments
+
+You will see zero pods for green deployment right now
+
+
+Write the service yAMl
+
+# vim service-green.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+ name: green
+spec:
+ type: ClusterIP
+ ports:
+  - targetPort: 80
+    port: 80
+ selector:
+  app: kubeserve
+  env: green
+
+
+We are not creating the service right now.
+
+
+We will first scale up the green deployment, observe the pods are running
+
+
+# kubectl scale deployment green  --replicas=3
+
+# kubectl create -f service-green.yml
+
+
+Scale down the blue deployment
+
+# kubectl scale deployment blue --replicas=0
+
+# kubectl get endpoints
+
+
+
+
 
 
 
