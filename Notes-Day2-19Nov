@@ -387,6 +387,92 @@ Check the pods:
 kubectl get pods
 kubectl top pods
 
+===============================================================
+VPA:
+=====================================
+
+# git clone https://github.com/kubernetes/autoscaler.git
+
+# cd autoscaler
+
+# cd vertical-pod-autoscaler
+
+# ./hack/vpa-up.sh
+# ./pkg/admission-controller/gencerts.sh
+
+# kubectl get pods -n kube-system | grep vpa
+
+# cd
+
+# vim deployment-vpa.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: high-cpu-utilization-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cpu-utilization-app
+  template:
+    metadata:
+      labels:
+        app: cpu-utilization-app
+    spec:
+      containers:
+      - name: cpu-utilization-container
+        image: ubuntu
+        command: ["/bin/sh", "-c", "apt-get update && apt-get install -y stress-ng && while true; do stress-ng --cpu 1; done"]
+        resources:
+          limits:
+            cpu: "0.05"
+          requests:
+            cpu: "0.05"
+
+save the file
+
+# kubectl create -f deployment-vpa.yml
+
+
+# vim vpa.yml
+
+apiVersion: "autoscaling.k8s.io/v1"
+kind: VerticalPodAutoscaler
+metadata:
+  name: stress-vpa
+spec:
+  targetRef:
+    apiVersion: "apps/v1"
+    kind: Deployment
+    name: high-cpu-utilization-deployment
+  updatePolicy:
+    updateMode: Auto
+  resourcePolicy:
+    containerPolicies:
+      - containerName: '*'
+        minAllowed:
+          cpu: 100m
+          memory: 50Mi
+        maxAllowed:
+          cpu: 200m  #maximum vpa will be allocating this many cpus even if demand is higher.
+          memory: 500Mi
+        controlledResources: ["cpu", "memory"]
+
+
+save the file
+
+# kubectl create -f vpa.yml
+
+# kubectl top pods
+
+# kubectl get pods
+
+
+
+
+
+
 
 
 
