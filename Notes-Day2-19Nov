@@ -211,6 +211,85 @@ Scale down the blue deployment
 # kubectl get endpoints
 
 
+=======================================================================
+
+Canary Deployment
+================================
+
+Create a Base deployment fo v1 of the application
+
+# vim deployment-base.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: base-app
+spec:
+ replicas: 3
+ selector:
+  matchLabels:
+   app: kubeserve
+ template:
+  metadata:
+   labels:
+    app: kubeserve
+  spec:
+   containers:
+    - name: c1
+      image: leaddevops/kubeserve:v1
+
+
+
+# kubectl create -f deployment-base.yml
+
+# kubectl get deployments
+
+Create service for base deployment
+
+# vim service-base.yml
+
+apiVersion: v1
+kind: Service
+metadata:
+ name: canary-service
+spec:
+ type: ClusterIP
+ ports:
+  - targetPort: 80
+    port: 80
+ selector:
+  app: kubeserve
+
+
+Create the new deployment with version 2
+
+# vim deployment-new.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: new-app
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+   app: kubeserve
+ template:
+  metadata:
+   labels:
+    app: kubeserve
+  spec:
+   containers:
+    - name: c1
+      image: leaddevops/kubeserve:v2
+
+
+  100  kubectl create -f deployment-new.yml
+  101  kubectl get endpoints
+  102  clear
+  103  kubectl scale deployment new-app  --replicas=3
+  104  kubectl scale deployment base-app  --replicas=0
+  105  kubectl get deployment
 
 
 
