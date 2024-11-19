@@ -1,0 +1,39 @@
+Start the Lab
+
+# sudo su -
+
+# kubectl get nodes
+
+demo1: recreate Deployment Strategy:
+
+# vim deployment-recreate.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: mydeploy
+spec:
+ replicas: 3
+ strategy:
+  type: Recreate
+ selector:
+  matchLabels:
+   app: kubeserve
+ template:
+  metadata:
+   labels:
+    app: kubeserve
+  spec:
+   containers:
+    - name: app
+      image: leaddevops/kubeserve:v1
+
+
+
+29  kubectl create -f recreate-deployment.yml
+   33  kubectl get all
+   35  kubectl get deployment -o wide
+   36  kubectl set image deployment mydeploy app=leaddevops/kubeserve:v2
+
+  37  kubectl get all
+   38  kubectl get deployment -o wide
