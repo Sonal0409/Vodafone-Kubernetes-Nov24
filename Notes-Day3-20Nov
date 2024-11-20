@@ -244,4 +244,69 @@ On the master machine, if you check the location for manifest path
 
 when we do a kubeadm init command on manual set up
 
-kubernetes will download the yaml files from internet and place them in masfests path and set the kube cluster
+kubernetes will download the yaml files from internet and place them in masfests path and set the kube cluster.
+
+======================================
+INIT container:
+
+1. A Pod can have multiple containers running apps within it, but it can also have one or more init containers, 
+which are run before the app containers are started.
+
+2. Init containers are exactly like regular containers, except:
+    > Init containers always run to completion.
+    > Each init container must complete successfully before the next one starts.
+If a Pod's init container fails, the kubelet repeatedly restarts that init container until it succeeds. 
+However, if the Pod has a restartPolicy of Never, 
+and an init container fails during startup of that Pod, Kubernetes treats the overall Pod as failed.
+
+3. To specify an init container for a Pod, add the initContainers field into the Pod specification, 
+as an array of container items (similar to the app containers field and its contents).
+
+Differences from regular containers:
+********************
+
+Init containers support all the fields and features of app containers, 
+including resource limits, volumes, and security settings. 
+However, the resource requests and limits for an init container are handled differently.
+
+Also, init containers do not support lifecycle, livenessProbe, readinessProbe, or startupProbe 
+because they must run to completion before the Pod can be ready.
+
+If you specify multiple init containers for a Pod, kubelet runs each init container sequentially. 
+Each init container must succeed before the next can run. 
+When all of the init containers have run to completion, kubelet initializes the application containers for the Pod and runs them as usual.
+
+
+Because init containers have separate images from app containers, they have some advantages for start-up related code:
+
+> Init containers can contain utilities or custom code for setup that are not present in an app image. 
+   For example, there is no need to make an image FROM another image just to use a tool like sed, awk, python, or dig during setup.
+
+> Because init containers run to completion before any app containers start, 
+init containers offer a mechanism to block or delay app container startup until a set of preconditions are met. 
+Once preconditions are met, all of the app containers in a Pod can start in parallel.
+
+> Init containers can securely run utilities or custom code that would otherwise make an app container image less secure. 
+By keeping unnecessary tools separate you can limit the attack surface of your app container image.
+
+
+
+
+
+kind: Pod  # kubectl api-resources
+apiVersion: v1
+metadata:
+  name: init-cont-pod1
+  namespace: default
+  labels:  # are mandatory # helps to indentify a group of pods in cluster # in kube if you do not provide a label kube will assing one automatically
+    role: dev  # here both key & value are your choice
+spec:
+  restartPolicy: Always # Never
+  initContainers:
+    - name: initcont2
+      image: ubuntu
+      command: ["bash", "-c", "sleep 5"]
+  containers:  # app containers
+    - name: tcont
+      image: httpd
+
