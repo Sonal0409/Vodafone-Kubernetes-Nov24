@@ -122,3 +122,122 @@ spec:
 # kubectl get jobs --watch
 # kubectl get cronjob hello
 
+================================
+
+Static Pods
+****************
+
+Which process in kubernetes is responsible to create PODs
+
+Kubelet is the process which is used to create and run PODS
+
+By default we send request to apiserver to create pods, but it is kubelet that created pods on the 
+scheduled node
+
+So can we directly instruct kubelet to create a pod on the node of a cluster 
+Yes that is possible: using the concept of Static pods
+
+- Static pods are created by Kubelet directly
+- We should give Pod yaml to kubelet so that kubelet can create pod
+- if you have to give YAML to kubelet Then we have to logon to the node where the pods has to be created
+- kubelet process running on the node reads the YAMl file from a location/path on that node or VM
+where we can place the yaml
+- By default kubelet has a configuration path called StaticPODpath
+- When Pod created by the kubelet it appends the node name to the podname in the YAML
+
+Example:
+*****************
+
+Go to a worker node:
+
+execute following command:
+
+# service kubelet status
+
+Now go to this location
+
+# cd /etc/kubernetes/manifests
+
+Create  a file with name as 
+
+vim static-pod.yml
+
+Copy the text from master machine(static-pod.yml file) into this file
+
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: static-pod
+  name: static-pod
+spec:
+  containers:
+  - image: nginx
+    name: static-pod
+
+
+
+Save the file
+
+*******************
+
+Go to Master node
+*****************************
+
+kubectl get pods --> static pod wil be there , here node name will be appeneded to pod name
+
+kubectl get pods -o wide --> pod will be scenduled on the same node by kubelet
+
+Now delete the pods and observe the behaviour
+
+$ kubectl delete pod <podname>
+
+You will observe kubelet will recreaate the pod on itself
+
+The only way to delete static pod is to delete the yaml file on slave node in the directory cd /etc/kubernetes/manifests
+
+go to slave 
+************
+
+cd /etc/kubernetes/manifests
+
+rm static-pod.yml
+
+go to master and check the if pod is available or not
+
+
+same can be done on the master node aslo if you copy the yaml file in the /ect/manifests  path. In this case pod will be create don the master node
+
+
+If in case the pod is failing and you want to check the kubelet logs on the SLAVE:
+
+# journalctl -u kubelet.service | less
+
+**********************************
+
+What is the use of static pods?
+
+In real time for deployment we don't need static pods, but then why kuberentes team has come up with this Concept.
+
+Lets understand that:
+
+# kubectl get pods -n kube-system -o wide
+
+here these are also all pods of kubernetes system
+kubernetes deploys its components as pods, but how did they get created even when we didnot have api server
+How did the etcd, apiserver pod get created?
+because kube-system pods are all static pods
+All the management components are all static pods
+
+only for cluster creation purpose kubvernetes brought in the process of static pods.
+
+On the master machine, if you check the location for manifest path
+
+# cd /etc/kubernetes/manifests/
+# ls -l
+# you will see all the yaml files here
+
+when we do a kubeadm init command on manual set up
+
+kubernetes will download the yaml files from internet and place them in masfests path and set the kube cluster
