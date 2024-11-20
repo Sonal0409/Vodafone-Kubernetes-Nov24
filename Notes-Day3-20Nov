@@ -156,7 +156,11 @@ execute following command:
 
 Now go to this location
 
-# cd /etc/kubernetes/manifests
+# cd /etc/kubernetes
+
+# mkdir manifests
+
+# cd manifests
 
 Create  a file with name as 
 
@@ -197,7 +201,7 @@ You will observe kubelet will recreaate the pod on itself
 
 The only way to delete static pod is to delete the yaml file on slave node in the directory cd /etc/kubernetes/manifests
 
-go to slave 
+go to Worker node 
 ************
 
 cd /etc/kubernetes/manifests
