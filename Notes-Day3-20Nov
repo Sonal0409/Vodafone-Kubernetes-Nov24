@@ -291,6 +291,7 @@ By keeping unnecessary tools separate you can limit the attack surface of your a
 
 
 
+# vim pod-init.yml
 
 
 kind: Pod  # kubectl api-resources
@@ -310,3 +311,7 @@ spec:
     - name: tcont
       image: httpd
 
+
+# kubectl create -f pod-init.yml
+
+# kubectl get pods
