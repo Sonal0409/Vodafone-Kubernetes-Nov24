@@ -87,3 +87,38 @@ spec:
         image: perl:5.34.0
         command: ["pel",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
 
+
+================================
+
+Cron Job:
+===========================================
+
+# vim cronjob.yml
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      backoffLimit: 4
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+          - name: hello
+            image: busybox:1.28
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+
+# kubectl create -f cronjob.yml
+# kubectl get cronjob
+# kubectl get cronjob hello
+# kubectl get jobs --watch
+# kubectl get cronjob hello
+
