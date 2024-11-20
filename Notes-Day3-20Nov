@@ -428,3 +428,140 @@ Go to the worker node where the pods is scenduled and check the volume
 
 # /tmp/data  -> this directory will be there
 
+================================
+ConfigMap:
+
+=================================================
+
+ConfigMaps
+A ConfigMap is an API object used to store non-confidential data in key-value pairs. Pods can consume ConfigMaps as environment variables, command-line arguments, or as configuration files in a volume.
+A ConfigMap allows you to decouple environment-specific configuration from your container images, so that your applications are easily portable.
+A ConfigMap is not designed to hold large chunks of data. The data stored in a ConfigMap cannot exceed 1 MiB. If you need to store settings that are larger than this limit, you may want to consider mounting a volume or use a separate database or file service.
+
+ConfigMap does not provide secrecy or encryption. If the data you want to store are confidential, use a Secret rather than a ConfigMap, or use additional (third party) tools to keep your data private.
+
+
+Demo:
+==============
+
+Create 2 configuration file which are storing key and value
+
+
+# vim dev.properties
+
+app.env: dev
+app.mem: 2048
+app.url: dev.com
+
+Save the file
+
+
+# vim prod.properties
+
+app.env: prod
+app.mem: 4048
+app.url: prod.com
+
+Save the file
+
+
+Now create 2 different configmaps that store the desired configuration- data
+
+# kubectl create configmap dev-config --from-file=dev.properties
+
+# kubectl describe configmap dev-config
+
+# kubectl create configmap prod-config --from-file=prod.properties
+
+# kubectl describe configmap prod-config
+
+# kubectl get configmap
+
+
+Now we will create 2 different pods from the same Image that will consume the created configmap.
+
+
+
+
+
+
+# vim config-Devpod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+ name: dev-pod
+spec:
+ containers:
+  - name: c1
+    image: nginx
+    volumeMounts:
+     - name: config-volume
+       mountPath: /etc/config
+ volumes:
+  - name: config-volume
+    configMap:
+     name: dev-config
+
+
+
+# kubectl create -f config-Devpod.yml
+
+# kubectl exec -it dev-pod -- bash
+
+# cd /etc/config
+
+# ls  ⇒ you will see the dev properties
+
+
+
+# vim conf-prodpod.yml
+
+apiVersion: v1
+kind: Pod
+metadata:
+ name: prod-pod
+spec:
+ containers:
+  - name: c1
+    image: nginx
+    volumeMounts:
+     - name: config-volume
+       mountPath: /etc/config
+ volumes:
+  - name: config-volume
+    configMap:
+     name: prod-config
+
+
+
+# kubectl create -f config-prodpod.yml
+
+# kubectl exec -it prod-pod -- bash
+
+# cd /etc/config
+
+# ls  ⇒ you will see the dev properties
+
+
+
+Now edit the existing config map for the changes to reflect in container:
+
+#  kubectl edit configmap dev-config -o yaml
+
+It will open a YAMl file.
+
+Press i and make changes to the data
+
+Save the file
+Wait for few seconds and then exec into the container
+
+# kubectl exec -it dev-pod -- bash
+
+# cd /etc/config
+
+# cat dev.properties
+
+# exit
+
+
