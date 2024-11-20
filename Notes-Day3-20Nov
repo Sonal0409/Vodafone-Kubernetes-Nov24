@@ -12,3 +12,78 @@ kubectl get ds
 A daemonset is created with desired pods as 2
 Note:
 If a new node is added to the cluster,a new pod will be created on the new node also. Desired count would have increased to 3.
+
+======================================
+
+
+Jobs in kubernetes:
+===================================================
+A job is a controller in kubernetes which will create a pod.
+In the pod a job/task will be executed. As the task is completed, the pod status will be completed and the job will stop.
+As part of the Job, the pods are alive only until the task is completed.
+
+As part of job only 1 pod is created by default.
+If the pod fails to complete the task,Job will never restart the pod
+Job will create a new pod to execute the task.
+On the job we can set up number of retries to be done in case the pods are failing using the parameter:
+ backoffLimit: 4
+
+As part of the job we can also create multiple pods 
+Using the parameter: completions = 4
+I.e. 4 pods have to be created and tasks has to be complete din them
+These pods will be created by default one after the other.
+
+However we can setup parameter -> parallelism 
+Ex: parallelism=2 
+So 2 pods will be created parallely.
+
+
+vim job.yml
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi1
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: pi
+        image: perl:5.34.0
+        command: ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+
+kubectl apply -f job.yaml
+kubectl get jobs -o wide
+kubectl get pods -o wide
+kubectl describe pod pi-wf7bm
+
+kubectl logs pi-27zzb
+
+
+Demo 2: Make an error on the command in job YAMl and create a new job
+
+Observe: due to backofflimit = 4 , it will try to create the pod again 4 more times.
+
+Total 5 pods. 1 initial pod and 4 retry pods
+
+There will not be any restart of the pod in concept of job
+
+
+# vim job2Err.yml
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi1
+spec:
+  backoffLimit: 4
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: pi
+        image: perl:5.34.0
+        command: ["pel",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+
