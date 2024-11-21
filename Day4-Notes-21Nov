@@ -154,3 +154,46 @@ Copy the token and then paste on the dashboard page to loginto it.
 
 You will be able to see the kubernetes dashboard now.
 
+================================================
+Namespaces:
+=====================================
+
+# kubectl create ns dev
+
+# kubectl get ns
+
+# vim pod-def.yml
+
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+ namespace: dev
+ name: pod1
+ labels:
+  app: webserver
+  author: multi-cont
+spec:
+ containers:
+  - name: c1
+    image: nginx
+
+save the file
+
+# kubectl create -f pod-def.yml
+
+# kubectl get pods
+
+# kubectl get pods -n dev
+
+
+
+
+
+
+
+
+
+
+
