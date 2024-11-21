@@ -187,6 +187,101 @@ save the file
 
 # kubectl get pods -n dev
 
+======================
+Problem: 
+- you have 2 namespaces 
+- you deploy  different app in each namespaces
+- you deploy service for each application in each namespace 
+- Can both the application communicate with each other  using the service 
+By default if we make use of just the serviceName and port number --> we cannot communicate 
+Instead we have to use fully qualified name of the service in order setup the communication 
+
+Solution:
+
+DNS:
+==============================================
+
+A DNS in kubernetes will store records of 
+-> Service
+-> pods
+
+Suppose you have created a namespace test in which you created a service mysvc
+
+So the entry in the dns will be in the format of 
+
+Servicename.namespaceName.svc.cluster.local
+
+That is : mysvc.test.svc.cluster.local
+
+
+Suppose you have created a namespace test in which you created a pod pod1
+
+So the entry in the dns will be in the format of 
+
+podName.namespaceName.pod.cluster.local
+
+That is : pod1.test.pod.cluster.local
+
+===========================================================
+
+Step 1: 
+
+Create a namespace:
+
+# kubectl create namespace testns
+
+Create a pod and service in this namespace
+
+# kubectl -n testns run nginx --image=nginx --expose --port=80
+
+The above command will create a pod with name as nginx and a service in the namespace testns
+
+NAME        READY   STATUS    RESTARTS   AGE
+pod/nginx   1/1     Running   0          10s
+
+NAME            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+service/nginx   ClusterIP   10.103.23.148   <none>        80/TCP    10s
+
+
+# kubectl get all -n testns
+
+Step 2:
+
+Create a pod and service in default namespace
+
+# kubectl -n default run nginx-default --image=nginx --expose --port=80
+
+
+# kubectl get all -n default
+
+service/nginx-default   ClusterIP   10.98.245.70   <none>        80/TCP    49s
+
+Step 3:
+
+Create a test pod in any namespace and exec into it
+
+# kubectl -n testns run dnstest --image=lerndevops/samples:netshoot --rm -it -- /bin/bash
+
+You will be on the bash terminal of the test pod
+
+Check the default dns values configured for the pod
+
+# cat /etc/resolv.conf
+
+# curl nginx
+
+You will get the output
+
+But if we have to curl to the service in default namespace, we will get error
+
+# curl nginx-default
+
+So for this we have to give the fully qualified name
+
+# curl nginx-default.default.svc.cluster.local
+
+
+This is how we can communicate with services in different namespaces.
 
 
 
