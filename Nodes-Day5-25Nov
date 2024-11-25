@@ -1,0 +1,36 @@
+execute command to get worker node name
+
+# kubectl get nodes
+Copy any one worker node name
+
+Scheduling
+=====================================================
+
+# vim nodenamedemo.yml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeserve  
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: kubeserve      
+  template:
+    metadata:
+      name: kubeserve
+      labels:
+        app: kubeserve
+    spec:
+      nodeName: <give worker node name>
+      containers:
+      - image: leaddevops/kubeserve:v1
+        name: app
+
+
+Save the file
+
+# kubectl create -f nodenamedemo.yml
+
+# kubectl get pods -o wide
