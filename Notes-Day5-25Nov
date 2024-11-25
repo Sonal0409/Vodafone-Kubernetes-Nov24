@@ -34,3 +34,34 @@ Save the file
 # kubectl create -f nodenamedemo.yml
 
 # kubectl get pods -o wide
+
+Node Selector:
+==================================
+
+kubectl label node <nodename1> disk=hdd
+
+kubectl label node <nodename2> disk=ssd
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubeserve
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kubeserve
+  template:
+    metadata:
+      name: kubeserve
+      labels:
+        app: kubeserve
+    spec:
+      nodeSelector:
+       disk: ssd
+      containers:
+      - image: leaddevops/kubeserve:v1
+        name: app
+
+
+
