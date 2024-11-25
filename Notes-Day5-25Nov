@@ -63,5 +63,70 @@ spec:
       - image: leaddevops/kubeserve:v1
         name: app
 
+======================================================
+# kubectl label node <workernode Name> author=sonal
+
+apiVersion: v1
+kind: Pod
+metadata:
+ name: with-node-affinity-1
+spec:
+ affinity:
+  nodeAffinity:
+   preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 1
+      preference:
+       matchExpressions:
+        - key: author
+          operator: In
+          values:
+           - sonal
+    - weight: 50
+      preference:
+       matchExpressions:
+        - key: disk
+          operator: In
+          values:
+           - hdd
+ containers:
+  - name: c1
+    image: nginx
+
+
+=======================================
+Required during scheduling
+==========================================
+apiVersion: v1
+kind: Pod
+metadata:
+ name: with-node-affinity
+spec:
+ affinity:
+  nodeAffinity:
+   requiredDuringSchedulingIgnoredDuringExecution:
+    nodeSelectorTerms:
+    - matchExpressions:
+       - key: disk
+         operator: In
+         values:
+          - ssd
+  containers:
+  - name: c1
+    image: nginx
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
