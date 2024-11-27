@@ -1,0 +1,340 @@
+Course End Project -1 
+
+Deploy the Application Using the Kubernetes Dashboard
+========================================
+
+
+1. Getting started with Pods, Services, and Deployments
+2. Creating and Verifying the Service
+3. Creating a token and working on a dashboard 
+4. Configure the NFS-server for MySQL and WordPress Deployment
+ 5. Setting up the NFS Client side 
+6. Creating and verifying the PV
+ 7. Creating a secret for MySQL Deployments secret data
+ 8. Creating a configmap for WordPress Deployment to store nonsensitive information
+
+
+
+Execution Steps:
+===================================
+
+Creating a token and deploy kubernetes  dashboard 
+
+
+
+Deploy the dashboard:
+
+# kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml
+# kubectl get all  -n kubernetes-dashboard
+
+# kubectl edit svc -n kubernetes-dashboard kubernetes-dashboard
+
+Chnage the type of service in spec from ClusterIP to NodePort
+
+Save the file
+
+Verifying the changes
+
+kubectl get svc -n kubernetes-dashboard -o wide
+
+Accessing Kubernetes Dashboard
+
+Click on the master tab on the lab, and then click on the desktop option.
+Open Firefox browser 
+https://localhost:<<NodePort>>
+Example: https://localhost:31851
+
+Click on Advanced -> Accept Risk and Continue
+
+
+To access the dashboard we need a token for which we have to create a Service account
+
+vim serviceaccount.yml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sandry
+  namespace: kubernetes-dashboard
+
+
+# kubectl create -f serviceaccount.yml
+
+
+# vim clusterrole-sa.yml
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+ name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+ - kind: ServiceAccount
+   name: sandry
+   namespace: kubernetes-dashboard
+
+
+
+# kubectl create -f clusterrole-sa.yml
+
+
+
+# vim sercret-sa.yml
+
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+ name: mysecret-sa
+ namespace: kubernetes-dashboard
+ annotations:
+  kubernetes.io/service-account.name: admin-user
+
+
+# kubectl create -f sercret-sa.yml
+
+# kubectl describe secret   mysecret-sa -n kubernetes-dashboard
+
+Copy the token and then paste on the dashboard page to loginto it.
+
+You will be able to see the kubernetes dashboard now.
+
+
+================================
+
+Step 2:
+
+Go to master Node:
+========================================
+
+Create an NFS server
+...
+sudo su -
+mkdir -p /data
+...
+
+## Install the NFS kernel server on the machine
+
+...
+
+sudo apt install nfs-kernel-server
+
+...
+
+## Change the owner user and group to nobody and nogroup
+
+...
+
+sudo chown nobody:nogroup /data/
+
+Set permissions to 777 to allow everyone to read, write, and execute files in this directory
+
+sudo chmod 777 /data/
+
+...
+
+## Open the exports file in the /etc directory for permission to access the host server machine
+
+...
+
+sudo vi /etc/exports
+
+Add the following code to the file:
+
+/data 	*(rw,sync,no_root_squash)
+
+Note: Exit the file and save the changes
+
+sudo exportfs -rv
+
+
+sudo systemctl restart nfs-kernel-server
+
+
+============================
+
+Deploy NFS client on worker nodes
+
+sudo apt install nfs-common
+
+
+===========================
+
+Step 3: Create PV and PVC for nfs server
+
+GO to dashboard -> click on + sign and enter below yaml
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-nfs
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    path: /data
+    server: 172.31.3.48
+
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mysql-nfs
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Mi
+
+
+Click on upload button
+
+You will see PV and PVC created on the dashboard
+
+You can also query on the terminal
+=======================
+
+Secrets and configmap for mysql deployment
+
+
+Upload the following yaml
+
+kind: Secret
+apiVersion: v1
+metadata:
+ name: mysql-pwd
+data:
+ password: "cGFzc3dvcmQ="
+
+
+Create configMap on the terminal and not via dashboard
+
+#  kubectl create configmap db1 --from-literal=MYSQL_DATABASE=wordpress
+
+# kubectl create configmap db2 --from-literal=WORDPRESS_DB_USER=wordpress
+
+Deploy the mysql deployment
+===========================
+
+Upload below YAMl in dashboard
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: mysql
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+   app: mysql-wordpress
+ template:
+  metadata:
+   labels:
+    app: mysql-wordpress
+    product: mysql
+  spec:
+   containers:
+     - name: mysql-container
+       image: mysql
+       env:
+       - name: MYSQL_ROOT_PASSWORD
+         valueFrom:
+          secretKeyRef:
+           name: mysql-pwd
+           key: password
+       - name: MYSQL_DATABASE
+         valueFrom:
+          configMapKeyRef:
+           name: db1
+           key: MYSQL_DATABASE
+       volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+   volumes:
+      - name: mysql-storage
+        persistentVolumeClaim:
+          claimName: mysql-nfs
+
+
+Service for mysql - clusterIP
+
+
+apiVersion: v1
+kind: Service
+metadata:
+ name: mysql
+spec:
+ type: ClusterIP
+ ports:
+  - targetPort: 3306
+    port: 3306
+ selector:
+  app: mysql-wordpress
+  product: mysql
+
+
+====================
+
+Deploy wordpress:
+====================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: wordpress
+spec:
+ replicas: 1
+ selector:
+  matchLabels:
+   app: mysql-wordpress
+   tier: frontend
+ template:
+  metadata:
+   labels:
+    app: mysql-wordpress
+    tier: frontend
+  spec:
+   containers:
+    - name: wordpress-container
+      image: wordpress
+      env:
+      - name: WORDPRESS_DB_HOST
+        value: mysql
+      - name: WORDPRESS_DB_USER
+        value: root
+      - name: WORDPRESS_DB_PASSWORD
+        value: password
+      
+---
+apiVersion: v1
+kind: Service
+metadata:
+ name: wordpress
+spec:
+ type: NodePort
+ ports:
+  - targetPort: 80
+    port: 80
+ selector:
+  app: mysql-wordpress
+  tier: frontend
+
+
+
+# kubectl get pods
+
+# kubectl get svc
+
+
+Access wordpress from browser
+
+localhost:<portnumber>
